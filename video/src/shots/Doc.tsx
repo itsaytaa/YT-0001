@@ -5,6 +5,7 @@ import { C, FONT } from "../theme";
 import { clamp01, ease, lerp, prog, shake } from "../anim";
 import { Stamp } from "./Stamp";
 import { STAMP_LAND } from "./Cards";
+import { useEpisodeMeta } from "../episode-context";
 
 export const PAPER = { w: 1100, h: 700, cx: 960, cy: 478 };
 const FS = 30;
@@ -45,6 +46,7 @@ export function layoutDoc(doc: any): DocLayout & { header: string[]; lines: stri
 }
 
 export const Doc: React.FC<{ doc: any; frame: number; fps: number; dur: number; audioFrames: number; id: string }> = ({ doc, frame, fps, dur, audioFrames, id }) => {
+  const meta = useEpisodeMeta();
   const { header, lines, headerY, lineY } = layoutDoc(doc);
   const headerless = !doc.header?.length;
   const lineOffset = headerless ? 1 : 0; // spec line indices refer to doc.lines
@@ -150,7 +152,7 @@ export const Doc: React.FC<{ doc: any; frame: number; fps: number; dur: number; 
           <ellipse cx={PAPER.cx + PAPER.w / 2 - 92} cy={PAPER.cy - PAPER.h / 2 + 88} rx={6} ry={3.5} fill={C.ink} />
         </g>
         <text x={PAPER.cx + PAPER.w / 2 - 150} y={PAPER.cy - PAPER.h / 2 + 150} textAnchor="middle" fontFamily={FONT.mono} fontSize={15} letterSpacing="0.14em" fill={C.ink} opacity={0.55}>
-          REF. DUR/0001
+          REF. DUR/{meta.advisory}
         </text>
         <text x={PAPER.cx} y={PAPER.cy + PAPER.h / 2 - 34} textAnchor="middle" fontFamily={FONT.mono} fontSize={15} letterSpacing="0.2em" fill={C.ink} opacity={0.5}>
           DEPARTMENT OF UNLISTED RISKS · PAGE 1 OF 1

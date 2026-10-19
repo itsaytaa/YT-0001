@@ -1,5 +1,5 @@
 // Shared helpers for the OpenRouter audio scripts.
-import { readFileSync, existsSync, writeFileSync } from "node:fs";
+import { readFileSync, existsSync, writeFileSync, readdirSync, mkdirSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -8,9 +8,32 @@ export const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 export const readJson = (p) => JSON.parse(readFileSync(join(root, p), "utf8"));
 export const writeJson = (p, v) => writeFileSync(join(root, p), JSON.stringify(v, null, 2) + "\n");
 
-export const scenes = readJson("scenes.json");
-export const audio = readJson("audio.json");
-export const voiceConfig = readJson("scripts/voice-config.json");
+// Which advisory: `--ep advisories/0002-robot-vacuum` (or `--ep 0002`), or EP=..., else
+// the newest folder in advisories/. The flag is removed from process.argv so scripts can
+// keep using positional arguments.
+function pickEpisode() {
+  const i = process.argv.indexOf("--ep");
+  let v = process.env.EP;
+  if (i >= 0) {
+    v = process.argv[i + 1];
+    process.argv.splice(i, 2);
+  }
+  const all = readdirSync(join(root, "advisories")).filter((d) => /^\d{4}-/.test(d)).sort();
+  if (!v) v = all.at(-1);
+  v = v.replace(/^advisories\//, "").replace(/\/$/, "");
+  const slug = all.find((d) => d === v || d.startsWith(`${v}-`));
+  if (!slug) throw new Error(`No advisory folder for "${v}" in advisories/ (have: ${all.join(", ")})`);
+  return slug;
+}
+export const slug = pickEpisode();
+export const epId = slug.slice(0, 4);
+export const EP = `advisories/${slug}`; // episode folder, relative to root
+export const ep = (p) => `${EP}/${p}`; // path inside the episode folder
+export const PUBLIC_LINES = `video/public/episodes/${slug}/lines`;
+
+export const scenes = readJson(ep("scenes.json"));
+export const audio = readJson("brand/audio.json");
+export const voiceConfig = readJson("brand/voice.json");
 export const lineById = Object.fromEntries(scenes.lines.map((l) => [l.id, l]));
 
 // The key comes from .env when present. Never print it. In environments where a
@@ -44,8 +67,11 @@ export async function withRetry(fn, tries = 4) {
   throw err;
 }
 
+// The narrator's slip lines are per episode (scenes.json meta.slipLines).
+export const slipLines = scenes.meta?.slipLines ?? audio.voice.slipLines ?? [];
+
 export function instructionsFor(lineId) {
-  return audio.voice.slipLines.includes(lineId)
+  return slipLines.includes(lineId)
     ? `${audio.voice.instructions} ${audio.voice.slipInstructions}`
     : audio.voice.instructions;
 }
@@ -122,11 +148,17 @@ export async function keyUsage() {
   return j.data.usage;
 }
 
-// Hard stop for the user's OpenRouter budget. reports/budget.json holds the
-// key's usage at the start of the project and the allowed spend on top of it.
+// Hard stop for the user's OpenRouter budget. <episode>/reports/budget.json holds the
+// key's usage when the episode started and the allowed spend on top of it. It is created
+// on the first paid call of a new advisory (cap: $2, about five times a normal episode).
 export async function assertBudget() {
-  const b = readJson("reports/budget.json");
   const usage = await keyUsage();
+  const path = ep("reports/budget.json");
+  if (!existsSync(join(root, path))) {
+    mkdirSync(join(root, ep("reports")), { recursive: true });
+    writeJson(path, { baselineUsage: usage, maxSpendUsd: 2.0, note: "Key usage when this advisory started. Spend = usage - baselineUsage." });
+  }
+  const b = readJson(path);
   if (usage - b.baselineUsage > b.maxSpendUsd) {
     throw Object.assign(new Error(`Budget exceeded: spent $${(usage - b.baselineUsage).toFixed(4)}`), { fatal: true });
   }

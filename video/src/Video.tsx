@@ -4,7 +4,9 @@ import React from "react";
 import { AbsoluteFill, Audio, Sequence, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
 import { C } from "./theme";
 import { easeInOut, lerp, prog, rand } from "./anim";
-import { SEGMENTS, scenes, timings, type Segment, type SubShot } from "./data";
+import type { Episode, Segment } from "./engine";
+import { getEpisode } from "./episodes";
+import { EpisodeMetaContext, EpisodeAssetsContext, useEpisodeAssets } from "./episode-context";
 import { Defs } from "./figures/Defs";
 import { Tableau } from "./shots/Tableau";
 import { DirectiveCard, EndCard, STAMP_LAND } from "./shots/Cards";
@@ -12,7 +14,7 @@ import { Doc, docFocusPoint } from "./shots/Doc";
 import { CaseFile, Floorplan, CounterShot, Calendar, Seal, lampClickFrames } from "./shots/Misc";
 import { Hud, Caption, Grain, Vignette, CaptionScrim } from "./overlays/Overlays";
 import { loadFonts } from "./fonts";
-import audioCfg from "./data/audio.json";
+import audioCfg from "../../brand/audio.json";
 
 loadFonts();
 
@@ -64,6 +66,7 @@ function camera(seg: Segment, frame: number) {
 
 const ShotView: React.FC<{ seg: Segment; frame: number }> = ({ seg, frame }) => {
   const { fps } = useVideoConfig();
+  const assets = useEpisodeAssets();
   const { sub } = currentSub(seg, frame);
   const shot = sub.shot;
   const local = frame - sub.localStart;
@@ -95,8 +98,11 @@ const ShotView: React.FC<{ seg: Segment; frame: number }> = ({ seg, frame }) => 
       return <Seal frame={local} fps={fps} />;
     case "end-card":
       return <EndCard frame={local} dur={dur} />;
-    default:
-      return null;
+    default: {
+      // Episode-specific shot types (src/episodes/<slug>/assets.tsx).
+      const Custom = assets.shots?.[shot.type];
+      return Custom ? <Custom shot={shot} frame={local} dur={dur} fps={fps} audioFrames={audioFrames} /> : null;
+    }
   }
 };
 
@@ -167,9 +173,9 @@ const SegmentView: React.FC<{ seg: Segment }> = ({ seg }) => {
 type Sfx = { frame: number; name: string; volume: number };
 const LV = audioCfg.sfx.levels as Record<string, number>;
 
-export function sfxEvents(fps: number): Sfx[] {
+export function sfxEvents(fps: number, ep: Episode): Sfx[] {
   const ev: Sfx[] = [];
-  SEGMENTS.forEach((seg) => {
+  ep.segments.forEach((seg) => {
     if (seg.transitionIn === "scan") ev.push({ frame: seg.startFrame, name: "scan", volume: LV.scan });
     for (const sub of seg.subs) {
       const { line, timing, shot } = sub;
@@ -204,7 +210,8 @@ export function sfxEvents(fps: number): Sfx[] {
   return ev;
 }
 
-function droneVolume(frame: number, fps: number) {
+function droneVolume(frame: number, fps: number, ep: Episode) {
+  const { scenes, timings } = ep;
   const base = 0.18;
   const total = timings.totalFrames;
   const end = timings.endCard.startFrame;
@@ -220,9 +227,11 @@ function droneVolume(frame: number, fps: number) {
   return v;
 }
 
-export const Video: React.FC = () => {
+export const Video: React.FC<{ ep: string }> = ({ ep: epId }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
+  const ep = getEpisode(epId);
+  const { scenes, timings, segments: SEGMENTS } = ep;
   const lineIdx = timings.lines.findIndex((t) => frame >= t.startFrame && frame < t.endFrame);
   const inEnd = frame >= timings.endCard.startFrame;
   const line = lineIdx >= 0 ? scenes.lines[lineIdx] : null;
@@ -233,6 +242,8 @@ export const Video: React.FC = () => {
   const carbonGhost = seg && seg.transitionIn === "carbon" && frame - seg.startFrame < CARBON;
   const firstLineStart = timings.lines[0].startFrame;
   return (
+    <EpisodeMetaContext.Provider value={ep.meta}>
+    <EpisodeAssetsContext.Provider value={ep.assets ?? {}}>
     <AbsoluteFill style={{ background: C.bg }}>
       {SEGMENTS.map((s, i) => {
         const next = SEGMENTS[i + 1];
@@ -253,13 +264,14 @@ export const Video: React.FC = () => {
       {/* fade from black at the very start */}
       <AbsoluteFill style={{ background: "#000", opacity: 1 - prog(frame, firstLineStart, firstLineStart + 15, (x) => x), pointerEvents: "none" }} />
 
-      <Audio src={staticFile("sfx/drone.wav")} volume={(f) => droneVolume(f, fps)} />
-      {scenes.lines.map((l, i) => (
+      <Audio src={staticFile("sfx/drone.wav")} volume={(f) => droneVolume(f, fps, ep)} />
+      {/* Estimated timings (scripts/timings.mjs --estimate) have no voice files yet. */}
+      {!timings.estimated && scenes.lines.map((l, i) => (
         <Sequence key={l.id} from={timings.lines[i].startFrame} durationInFrames={timings.lines[i].audioFrames + 3} layout="none">
-          <Audio src={staticFile(`lines/${l.id}.wav`)} />
+          <Audio src={staticFile(`episodes/${ep.slug}/lines/${l.id}.wav`)} />
         </Sequence>
       ))}
-      {sfxEvents(fps).map((e, i) => (
+      {sfxEvents(fps, ep).map((e, i) => (
         <Sequence key={i} from={e.frame} durationInFrames={Math.round(fps * 0.6)} layout="none">
           <Audio src={staticFile(`sfx/${e.name}.wav`)} volume={e.volume} />
         </Sequence>
@@ -268,5 +280,7 @@ export const Video: React.FC = () => {
         <Audio src={staticFile("sfx/stamp.wav")} volume={LV.stamp} />
       </Sequence>
     </AbsoluteFill>
+    </EpisodeAssetsContext.Provider>
+    </EpisodeMetaContext.Provider>
   );
 };

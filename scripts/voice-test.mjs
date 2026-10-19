@@ -3,9 +3,9 @@
 import { existsSync, mkdirSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { join } from "node:path";
-import { root, audio, voiceConfig, lineById, speak, audioToFiles, instructionsFor, withRetry, assertBudget, pool } from "./lib.mjs";
+import { root, ep, audio, voiceConfig, lineById, speak, audioToFiles, instructionsFor, withRetry, assertBudget, pool } from "./lib.mjs";
 
-const outDir = join(root, "audio/voice-tests");
+const outDir = join(root, ep("audio/voice-tests"));
 mkdirSync(outDir, { recursive: true });
 await assertBudget();
 

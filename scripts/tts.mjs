@@ -3,12 +3,12 @@
 // unless ids are given explicitly, in which case they are regenerated).
 import { existsSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
-import { root, readJson, writeJson, scenes, voiceConfig, speak, audioToFiles, instructionsFor, withRetry, assertBudget, generationCost, pool } from "./lib.mjs";
+import { root, ep, readJson, writeJson, scenes, voiceConfig, speak, audioToFiles, instructionsFor, withRetry, assertBudget, generationCost, pool } from "./lib.mjs";
 
 const { model, voice } = voiceConfig.chosen;
-const outDir = join(root, "audio/lines");
+const outDir = join(root, ep("audio/lines"));
 mkdirSync(outDir, { recursive: true });
-const logPath = "reports/tts-log.json";
+const logPath = ep("reports/tts-log.json");
 const log = existsSync(join(root, logPath)) ? readJson(logPath) : { model, voice, lines: {} };
 
 const forced = process.argv.slice(2);

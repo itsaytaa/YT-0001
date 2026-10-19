@@ -1,5 +1,5 @@
 // Design tokens from style.json.
-import style from "./data/style.json";
+import style from "../../brand/style.json";
 
 export const C = {
   bg: "#0B0D10",

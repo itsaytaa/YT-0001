@@ -1,13 +1,13 @@
 // YouTube thumbnail (style.json -> thumbnail), 1280x720.
 import React from "react";
 import { AbsoluteFill } from "remotion";
-import { C, FONT, DISPLAY_STYLE } from "./theme";
-import { Defs } from "./figures/Defs";
-import { Cat } from "./figures/Cat";
-import { Corner } from "./figures/Corner";
-import { InspectorBody } from "./figures/Inspector";
-import { Grain, Vignette } from "./overlays/Overlays";
-import { loadFonts } from "./fonts";
+import { C, FONT, DISPLAY_STYLE } from "../../theme";
+import { Defs } from "../../figures/Defs";
+import { Cat } from "../../figures/Cat";
+import { Corner } from "../../figures/Corner";
+import { InspectorBody } from "../../figures/Inspector";
+import { Grain, Vignette } from "../../overlays/Overlays";
+import { loadFonts } from "../../fonts";
 
 loadFonts();
 

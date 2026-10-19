@@ -3,10 +3,12 @@ import React from "react";
 import { AbsoluteFill, Img, staticFile } from "remotion";
 import { C, FONT, style } from "../theme";
 import { rand } from "../anim";
+import { useEpisodeMeta, fill } from "../episode-context";
 
 const hud = style.hud;
 
 export const Hud: React.FC<{ directive: number | null }> = ({ directive }) => {
+  const meta = useEpisodeMeta();
   const items = hud.progress.items;
   const cur = directive == null ? -1 : directive - 1;
   const mono: React.CSSProperties = { fontFamily: FONT.mono, fontWeight: 500, letterSpacing: hud.topLeft.letterSpacing, color: C.dim, fontSize: hud.topLeft.size, lineHeight: 1.45 };
@@ -14,7 +16,7 @@ export const Hud: React.FC<{ directive: number | null }> = ({ directive }) => {
     <AbsoluteFill style={{ pointerEvents: "none" }}>
       <div style={{ position: "absolute", left: hud.topLeft.x, top: hud.topLeft.y - 22, ...mono }}>
         {hud.topLeft.lines.map((l) => (
-          <div key={l}>{l}</div>
+          <div key={l}>{fill(l, meta)}</div>
         ))}
       </div>
       <div style={{ position: "absolute", right: 1920 - hud.topRight.x, top: hud.topRight.y - 22, ...mono, textAlign: "right" }}>{hud.topRight.text}</div>

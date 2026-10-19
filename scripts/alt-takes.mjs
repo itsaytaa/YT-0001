@@ -2,7 +2,7 @@
 // Usage: node scripts/alt-takes.mjs L083 4
 import { readFileSync, copyFileSync } from "node:fs";
 import { join } from "node:path";
-import { root, voiceConfig, lineById, speak, audioToFiles, headers, assertBudget, withRetry } from "./lib.mjs";
+import { root, ep, voiceConfig, lineById, speak, audioToFiles, headers, assertBudget, withRetry } from "./lib.mjs";
 import { wer } from "./normalize.mjs";
 
 const [id, n = "4"] = process.argv.slice(2);
@@ -19,9 +19,9 @@ async function transcribe(file, sttModel) {
 }
 
 await assertBudget();
-const takes = [{ file: join(root, `audio/lines/${id}.mp3`), label: "current" }];
+const takes = [{ file: join(root, ep(`audio/lines/${id}.mp3`)), label: "current" }];
 for (let i = 1; i <= Number(n); i++) {
-  const mp3 = join(root, `audio/lines/alt/${id}-take${i}.mp3`);
+  const mp3 = join(root, ep(`audio/lines/alt/${id}-take${i}.mp3`));
   audioToFiles(await withRetry(() => speak(lineById[id].voice, voice, null, model)), mp3.replace(/\.mp3$/, ".wav"), mp3);
   takes.push({ file: mp3, label: `take${i}` });
 }
@@ -33,7 +33,7 @@ for (const t of takes) {
 const best = takes.reduce((a, b) => (b.score < a.score ? b : a));
 console.log(`best: ${best.label}`);
 if (best.label !== "current") {
-  copyFileSync(best.file, join(root, `audio/lines/${id}.mp3`));
-  copyFileSync(best.file.replace(/\.mp3$/, ".wav"), join(root, `audio/lines/${id}.wav`));
+  copyFileSync(best.file, join(root, ep(`audio/lines/${id}.mp3`)));
+  copyFileSync(best.file.replace(/\.mp3$/, ".wav"), join(root, ep(`audio/lines/${id}.wav`)));
 }
 console.log(`spent so far (whole project): $${(await assertBudget()).toFixed(4)}`);

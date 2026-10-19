@@ -12,7 +12,7 @@
 |---|---|
 | Channel | **Not Covered** (this is never covered by the news) |
 | Narrator | **Department of Unlisted Risks** (DUR), a fictional federal department. It never names itself as anything other than "the Department" or "we". |
-| Voice | Low, calm, male, deadpan. A civil servant reading a routine advisory. |
+| Voice | Low, calm, male, deadpan. A civil servant reading a routine advisory. **Locked:** MiniMax Speech 2.8 HD, voice `English_ManWithDeepVoice`, through OpenRouter as `minimax/speech-2.8-hd` (see `brand/voice.json`). |
 | Episode unit | An **Advisory** with a four-digit number (this is 0001). |
 | Structure | Cold open → teaser → the world → **six Directives** → **Addendum** (reveal) → callback → sign-off. |
 | Catchphrases | Repetition: *"We will not be putting that in writing."* · Slip: *"Apologies. That remark has been redacted."* · Sign-off: *"This advisory has ended."* |

@@ -1,55 +1,54 @@
-# Advisory 0001: build the video
+# Not Covered: studio
 
-You are building one finished YouTube video from this folder: **"If Your Cat Ever Stares At An Empty Corner… DO NOT LOOK"** for the channel *Not Covered*. The narrator is the fictional **Department of Unlisted Risks**. The video is a JavaScript animation (Remotion + React + SVG) rendered to MP4. The only AI-generated asset is the voice-over, made through OpenRouter.
+This repo makes the YouTube channel **Not Covered**. Each video is an **Advisory** from the fictional **Department of Unlisted Risks**: a five-minute "rules horror" pictogram video drawn in code with Remotion (React + SVG) and rendered to MP4. The only AI-generated asset is the voice-over (OpenRouter TTS, checked with OpenRouter STT). All content is English.
 
-Everything you need is in this folder. Do not ask the user for creative decisions; they are already made. Ask only for the API key if it is missing, and once for the voice choice (step 3).
+## Layout
 
-## Files
+```
+brand/                      the channel. Shared by every advisory; never changed for one episode.
+  BRAND.md                  identity, advisory formula, characters, layout, rules for new assets  ← read first
+  style.json audio.json     visual and audio tokens (voice is locked in voice.json)
+  catalog.json              what the kit can draw (validate.mjs checks scenes.json against it)
+  scene-library.md          what each element / pose / shot type looks like
+  reference/*.png           golden images: characters, props, layout, cards
+  templates/new-advisory/   skeleton files for the next advisory
+  CHANGELOG.md              every change to the kit or the brand
+advisories/NNNN-topic/      one folder per video: brief, script, scenes.json, timings.json,
+                            metadata.md, audio/, reports/, out/
+video/src/                  the shared kit (engine, figures, shots, overlays, sheets)
+video/src/episodes/NNNN-topic/
+                            the only per-episode code: index.ts (wiring), patches.ts
+                            (corrections), assets.tsx (episode-only assets), Thumbnail.tsx
+scripts/                    pipeline; every script takes --ep NNNN (default: newest advisory)
+```
 
-| File | Role |
-|---|---|
-| `brief.md` | Concept, tone, channel identity. Read first. |
-| `scenes.json` | **Source of truth.** `lines` (voice text, caption, shot, pause, emphasis, sfx, transition) and `shots` (what is on screen). |
-| `style.json` | Palette, fonts, captions, HUD, cards, documents, figures, transitions, effects, thumbnail. |
-| `scene-library.md` | Spec for every component and element used in `scenes.json`. |
-| `audio.json` | Voice (TTS), verification (STT), timing formula, drone bed, sound effects, mastering. |
-| `script.md` | Human-readable script (mirror of `scenes.json`). |
-| `metadata.md` | Title, description, tags, pinned comment; chapters are filled in by you in step 9. |
+## Make a new advisory
 
-Never change the wording of `voice` or `caption`. If something in the script looks wrong, report it instead of fixing it.
+1. **Scaffold:** `node scripts/new-advisory.mjs 0002 robot-vacuum "If Your Robot Vacuum Ever… DO NOT …"`. This creates both folders, registers the episode and writes estimated timings.
+2. **Write.** Read `brand/BRAND.md`, then fill in `brief.md` → `script.md` → `scenes.json`. Follow the advisory formula: cold open, teaser, world, six directives, addendum, callback, outro; 600–760 words; one slip line listed in `meta.slipLines`. Build shots from the kit vocabulary in `brand/catalog.json`, with the look in `brand/reference/*.png`.
+3. **Validate:** `node scripts/validate.mjs --ep 0002`. Fix every ERROR. Warnings are judgement calls.
+4. **Preview for free:** `node scripts/timings.mjs --ep 0002 --estimate`, then `cd video && npx remotion studio` → `Advisory-0002`. Iterate on scenes.json until every shot reads well. `node scripts/review-stills.mjs --ep 0002` gives one still per shot plus a contact sheet.
+5. **Voice** (costs money; the budget guard writes `reports/budget.json` with a $2 cap on first use):
+   `node scripts/tts.mjs --ep 0002` → `node scripts/stt-check.mjs --ep 0002` → `node scripts/timings.mjs --ep 0002`.
+   The voice is locked (`brand/voice.json → chosen`). Do not run a voice test for a normal episode.
+6. **Review:** `node scripts/review-stills.mjs --ep 0002`, then look at the contact sheet. Fix layout issues in scenes.json. After the voice is locked, use `patches.ts` for corrections.
+7. **Render and master:**
+   ```sh
+   cd video && npx remotion render Advisory-0002 ../advisories/0002-robot-vacuum/out/advisory-0002.mp4 --codec=h264 --crf=16 --audio-codec=aac --audio-bitrate=320k
+   cd ../advisories/0002-robot-vacuum/out && ffmpeg -i advisory-0002.mp4 -af "loudnorm=I=-14:TP=-2.0:LRA=11,aresample=48000" -c:v copy -c:a aac -b:a 320k -ar 48000 -movflags +faststart advisory-0002-final.mp4
+   ```
+   Aim for -14 LUFS and at most -1.0 dBTP (check with `ffmpeg -af ebur128=peak=true`).
+8. **Thumbnail and metadata:** edit `video/src/episodes/<slug>/Thumbnail.tsx`, then run `npx remotion still Thumbnail-0002 ../advisories/<slug>/out/thumbnail.png`. Then `node scripts/chapters.mjs --ep 0002` and finish `metadata.md`.
+9. **Report:** write `reports/report.md` covering runtime, lines regenerated, pause scale, cost and anything that deviated from the brand.
 
-## Requirements
+## Rules
 
-- Node 18+ and ffmpeg/ffprobe on PATH. Check first; tell the user what is missing.
-- `OPENROUTER_API_KEY` in `.env` at the folder root. If missing, ask the user to add it. Never print, log or commit the key. Add `.env` to `.gitignore`.
+- **Reuse the kit first.** Characters (person, inspector, cat, crowd), props, cards, documents, HUD and captions are drawn by the kit and are never redrawn or restyled for an episode.
+- **New assets are welcome** when an advisory needs something the kit can't draw. Declare it in `scenes.json → meta.customElements` / `meta.customShots`, implement it in `video/src/episodes/<slug>/assets.tsx`, and follow `brand/BRAND.md` §5. When a second advisory needs it, promote it into the kit (§6).
+- **Do not edit kit files** (`video/src/` outside `episodes/`, `brand/`) for one episode. If the kit itself must change, run `node scripts/check-reference.mjs` afterwards. If the look changed on purpose, run it with `--update`, bump `kitVersion` in `catalog.json`, add a line to `brand/CHANGELOG.md`, and confirm that earlier advisories still render.
+- **Before committing:** `cd video && npx tsc --noEmit`, `node scripts/validate.mjs --ep <id>` for every advisory you touched, and `node scripts/check-reference.mjs` when kit files changed.
+- **Secrets:** `OPENROUTER_API_KEY` lives in `.env` (gitignored). Never print, log or commit it.
+- **Rendering in a small container:** add `--concurrency=1`. If Chrome can't be downloaded, pass `--browser-executable=<chrome-headless-shell>` to Remotion, or set `REMOTION_BROWSER_EXECUTABLE` for the scripts.
+- **Large files:** final MP4s (~280 MB) and regenerable WAVs are gitignored. The trimmed line WAVs in `video/public/episodes/<slug>/lines/` are committed so a video can be re-rendered without API calls.
 
-## Steps
-
-1. **Scaffold.** Create a Remotion 4 TypeScript project in `video/` (blank template). Add `@remotion/google-fonts` and `@remotion/media-utils`. Copy `scenes.json` to `video/src/data/scenes.json` (or import it with a relative path). Create `scripts/` (Node ESM, no extra framework), `audio/lines/`, `audio/sfx/`, `audio/voice-tests/`, `reports/`, `out/`.
-2. **Sound effects and bed.** Run the ffmpeg recipes in `audio.json` → `bed` and `sfx` to create `audio/sfx/*.wav`. Put them where Remotion can load them (`video/public/sfx/`).
-3. **Voice test.** `scripts/voice-test.mjs`: for each voice in `audio.json → voice.voiceCandidates`, generate lines L001, L018, L073 into `audio/voice-tests/`. Ask the user once which voice to use (list the file paths). No answer → `onyx`.
-4. **Voice-over.** `scripts/tts.mjs`: one request per line to `POST https://openrouter.ai/api/v1/audio/speech` with the model, voice, `instructions` (use `slipInstructions` for lines in `slipLines`) and `response_format: "mp3"` from `audio.json`. Save `audio/lines/<id>.mp3`. Skip existing files, concurrency 4, retry with backoff. Log status, bytes and `X-Generation-Id` per line in `reports/tts-log.json`.
-5. **Verify.** `scripts/stt-check.mjs`: transcribe each line with `POST https://openrouter.ai/api/v1/audio/transcriptions` (`verbose_json`, word timestamps). Compute word error rate against the `voice` text (normalised). WER > 0.15 → regenerate that line (max 2 extra tries). Use the word timestamps to trim leading/trailing silence over 0.15 s (ffmpeg `atrim`). Write `reports/stt-check.json`. Copy final line files to `video/public/lines/`.
-6. **Timings.** `scripts/timings.mjs`: measure every final line with ffprobe and apply the formula in `audio.json → timing`. Write `video/src/data/timings.json`. Total runtime must land in 4:45–5:30 including the 3 s end card; if not, scale only the `pauseAfter` values and report the factor.
-7. **Build the visuals.** Implement the components in `scene-library.md` with the tokens in `style.json`, then the `Video` composition (1920×1080, 30 fps, duration from `timings.json` via `calculateMetadata`). Per line: a `<Sequence>` from its start frame to the next line's start frame showing its shot (resolve `same_as`, `add`, `hold`), the caption, the HUD, the line audio, and its sfx. Global layers: drone bed with the silence ducking from `audio.json`, grain, vignette.
-   - Then render **one still per shot** (middle frame of the first line that uses it) to `out/review/<shotId>.png` and build a contact sheet `out/review/contact-sheet.png` (ffmpeg tile, 6 columns). Look at the stills yourself. Check each against its `desc`: correct elements, readable at a glance, nothing overlapping the caption zone, consistent figure style. Fix and re-render the stills that fail. Do this before polishing motion.
-8. **Render.** `npx remotion render` → `out/advisory-0001-cat-corner.mp4` (H.264, AAC 48 kHz). Then apply the loudness pass from `audio.json → master` → `out/advisory-0001-cat-corner-final.mp4`.
-9. **Thumbnail and metadata.** Add a `Thumbnail` still composition (1280×720, `style.json → thumbnail`) and render `out/thumbnail.png`. Fill in the chapter timestamps in `metadata.md` from `timings.json` (first line of each beat; first chapter must be 0:00).
-10. **Report.** Finish with a short report: final runtime, voice used, lines regenerated after the STT check, any pause scaling, total OpenRouter cost if the responses report it, and the output file paths.
-
-## Done when
-
-- [ ] `out/advisory-0001-cat-corner-final.mp4` exists: 1920×1080, 30 fps, 4:45–5:30, loudness −14 LUFS ±1.
-- [ ] Every line is audible, in order, with its caption shown for exactly its duration, emphasis words coloured.
-- [ ] All 104 lines pass the STT check (or are listed in the report as accepted after 3 attempts).
-- [ ] Every shot matches its `desc`; the contact sheet has been reviewed and is saved.
-- [ ] HUD progress follows the directives; directive cards land with the stamp sound.
-- [ ] The slip (L070–L072) is visibly grey and different. The inspector appears only as a faint hint before the slip, in grey during the slip, and clearly from the addendum (L094) onward.
-- [ ] `out/thumbnail.png` (1280×720) and a completed `metadata.md`.
-
-## Do not
-
-- Do not generate images or video with AI models; everything visual is drawn in code.
-- Do not use real brands, logos or real people.
-- Do not imitate the channel Bradikinin: no "trusted government agency" phrasing, no FILE-number HUD, no sunglasses agent, no yellow/white/red pictogram palette with yellow accent. Our identity is in `style.json`.
-- Do not change the script text, the shot order or the channel/department names.
+`advisories/0001-cat-corner/BUILD.md` is the original one-off build spec for Advisory 0001. It is kept for history; this file replaces it for new work.

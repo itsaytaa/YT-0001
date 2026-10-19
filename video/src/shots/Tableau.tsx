@@ -4,7 +4,8 @@
 import React from "react";
 import { C } from "../theme";
 import { clamp01, ease, easeInOut, lerp, popIn, prog, rand } from "../anim";
-import type { El, SubShot } from "../data";
+import type { El, SubShot } from "../engine";
+import { useEpisodeAssets } from "../episode-context";
 import { PersonBody, POSES, mixPose, PersonInBed, type Pose } from "../figures/Person";
 import { Cat, CatFace, CAT_ANCHORS, catAnchorKey } from "../figures/Cat";
 import { InspectorBody } from "../figures/Inspector";
@@ -89,6 +90,7 @@ export function computeAnchors(els: El[]): Ctx["anchors"] {
 const resolvePt = (v: any, ctx: Ctx): Pt => (typeof v === "string" ? ctx.anchors[v] ?? { x: 960, y: 540 } : v);
 
 const ElementView: React.FC<{ e: El; tm: Tm; ctx: Ctx; frame: number; idx: number; slip?: boolean }> = ({ e, tm, ctx, idx, slip }) => {
+  const assets = useEpisodeAssets();
   const { fps } = ctx;
   const delay = (e.delay ?? 0) * fps;
   const t = tm.t - delay;
@@ -254,8 +256,15 @@ const ElementView: React.FC<{ e: El; tm: Tm; ctx: Ctx; frame: number; idx: numbe
         </g>
       );
     }
-    default:
-      return null;
+    default: {
+      // Episode-specific element kinds (src/episodes/<slug>/assets.tsx).
+      const Custom = assets.elements?.[e.el];
+      return Custom ? (
+        <g opacity={baseOpacity}>
+          <Custom e={e} t={t} dur={tm.dur} fps={fps} />
+        </g>
+      ) : null;
+    }
   }
 };
 

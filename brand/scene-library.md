@@ -2,6 +2,8 @@
 
 Everything on screen is drawn in code (React + SVG inside Remotion). There are no image or video generation steps. This file specifies every component that `scenes.json` refers to. Colours and fonts come from `style.json`.
 
+Since Advisory 0001 these components exist in the shared kit (`video/src/figures`, `video/src/shots`). What they look like is fixed by the golden images in `brand/reference/` (characters, props, layout, cards). This file is the description; the PNGs are the authority. For assets the kit doesn't have, see `brand/BRAND.md` §5–6.
+
 ## Conventions
 
 - Coordinates in `scenes.json` are pixels in a 1920×1080 frame. They are **composition guides**: keep the described layout and the relationships between elements (who looks at what, what stands between what), but adjust positions and sizes freely if something overlaps, crowds the captions, or leaves the safe area.
@@ -79,7 +81,7 @@ See style.json → figures.corner. Variants `plain`, `lit`, `washed`, `dark`. `e
 | `gaze` | Dotted line (6 px dots, 14 px gaps) from `from` to `to`. Anim `draw-on`. `blocked_by: "person"` = stop the line at that figure. |
 | `mark` | `cross` (two thick strokes), `check`, `circle` (ring). Colours blue or red. |
 | `eye` | Large almond eye pictogram, fg outline with filled iris. |
-| `label` | Thin leader line from the target anchor to a short mono label (16 px, letter-spaced). |
+| `label` | Thin leader line from the target anchor to a short mono label (24 px, letter-spaced; 16 px was too small at 1080p). |
 | `speech` / `thought` | Rounded bubble with tail toward `from`. `size: "small"`, `outline_only: true`, anim `fade-out`. Text in caption font. |
 | `boundary` | Dashed blue line on the floor between two points. |
 | `glow` | Soft radial gradient light in the given colour and opacity. |

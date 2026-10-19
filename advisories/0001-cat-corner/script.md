@@ -1,6 +1,6 @@
 # Advisory 0001 — If Your Cat Ever Stares At An Empty Corner… DO NOT LOOK
 
-Channel: **Not Covered** · Narrator: **Department of Unlisted Risks** · Voice: low, calm, male, deadpan
+Channel: **Not Covered** · Narrator: **Department of Unlisted Risks** · Voice: low, calm, male, deadpan (MiniMax Speech 2.8 HD, `English_ManWithDeepVoice`, via OpenRouter as `minimax/speech-2.8-hd`)
 
 104 lines · 663 words · target runtime 4:45–5:30
 

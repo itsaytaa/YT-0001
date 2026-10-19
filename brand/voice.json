@@ -1,12 +1,12 @@
 {
-  "note": "audio.json names openai/gpt-4o-mini-tts-2025-12-15 (voices onyx/ash/echo), which OpenRouter no longer serves. Following audio.json -> modelFallbackDiscovery, the primary replacement is Gemini TTS (supports `instructions`, deep male English voices; returns raw PCM 24 kHz mono, converted locally). Round 2 of the voice test adds top narrator voices from other providers; those ignore `instructions`.",
-  "model": "google/gemini-3.8-flash-tts",
+  "note": "Channel voice (locked since Advisory 0001): minimax/speech-2.8-hd, English_ManWithDeepVoice, chosen by the owner after two test rounds. The candidate list below is the test history; keep it for a future re-test if this model is ever retired. MiniMax ignores `instructions`; slip lines get their treatment in post (scripts/stt-check.mjs).",
+  "model": "minimax/speech-2.8-hd",
   "pcm": {
     "sampleRate": 24000,
     "channels": 1
   },
-  "voice": null,
-  "voiceDefault": "Charon",
+  "voice": "English_ManWithDeepVoice",
+  "voiceDefault": "English_ManWithDeepVoice",
   "voiceCandidates": [
     {
       "label": "charon",

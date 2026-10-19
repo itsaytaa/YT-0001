@@ -10,6 +10,7 @@
   "height": 1080,
   "fps": 30,
   "leadInSec": 0.6,
+  "slipLines": ["L070"],
   "endCard": {
    "shot": "END",
    "holdSec": 3.0
@@ -144,7 +145,7 @@
    "shot": "S06",
    "pauseAfter": 0.3,
    "emphasis": [
-    "six directives"
+    "6 directives"
    ],
    "sfx": "page",
    "transitionIn": "scan"

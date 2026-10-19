@@ -1,11 +1,11 @@
 {
-  "name": "advisory-0001-video",
+  "name": "not-covered-video",
   "version": "1.0.0",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "remotion studio",
-    "render": "remotion render Video ../out/advisory-0001-cat-corner.mp4"
+    "render": "remotion render"
   },
   "dependencies": {
     "@remotion/bundler": "^4.0.532",

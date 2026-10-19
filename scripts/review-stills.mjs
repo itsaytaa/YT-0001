@@ -4,15 +4,14 @@ import { createRequire } from "node:module";
 import { execFileSync } from "node:child_process";
 import { mkdirSync, existsSync } from "node:fs";
 import { join } from "node:path";
-import { root, readJson } from "./lib.mjs";
+import { root, ep, epId, scenes, readJson } from "./lib.mjs";
 
 const require = createRequire(join(root, "video/package.json"));
 const { bundle } = require("@remotion/bundler");
 const { renderStill, selectComposition } = require("@remotion/renderer");
 
-const scenes = readJson("scenes.json");
-const timings = readJson("video/src/data/timings.json");
-const outDir = join(root, "out/review");
+const timings = readJson(ep("timings.json"));
+const outDir = join(root, ep("out/review"));
 mkdirSync(outDir, { recursive: true });
 
 // First line per shot, in shot order.
@@ -31,9 +30,10 @@ const only = process.argv.slice(2);
 const todo = only.length ? frames.filter((f) => only.includes(f.id)) : frames;
 
 const serveUrl = await bundle({ entryPoint: join(root, "video/src/index.ts"), publicDir: join(root, "video/public") });
-const composition = await selectComposition({ serveUrl, id: "Video" });
+const browserExecutable = process.env.REMOTION_BROWSER_EXECUTABLE || null;
+const composition = await selectComposition({ serveUrl, id: `Advisory-${epId}`, browserExecutable });
 for (const { id, frame } of todo) {
-  await renderStill({ composition, serveUrl, output: join(outDir, `${id}.png`), frame, imageFormat: "png" });
+  await renderStill({ composition, serveUrl, output: join(outDir, `${id}.png`), frame, imageFormat: "png", browserExecutable });
   console.log(`${id} @ ${frame}`);
 }
 

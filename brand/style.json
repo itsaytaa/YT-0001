@@ -1,6 +1,18 @@
 {
-  "canvas": { "width": 1920, "height": 1080, "fps": 30, "background": "#0B0D10" },
-  "safeArea": { "top": 120, "bottom": 980, "left": 120, "right": 1800, "groundY": 780, "note": "Scene content lives between y=150 and y=820. Captions own y=860–1000. HUD owns the top 100 px." },
+  "canvas": {
+    "width": 1920,
+    "height": 1080,
+    "fps": 30,
+    "background": "#0B0D10"
+  },
+  "safeArea": {
+    "top": 120,
+    "bottom": 980,
+    "left": 120,
+    "right": 1800,
+    "groundY": 780,
+    "note": "Scene content lives between y=150 and y=820. Captions own y=860–1000. HUD owns the top 100 px."
+  },
   "palette": {
     "bg": "#0B0D10",
     "fg": "#EEF1F4",
@@ -21,14 +33,33 @@
   },
   "fonts": {
     "load": "Use @remotion/google-fonts so fonts are embedded at render time.",
-    "caption": { "family": "IBM Plex Sans Condensed", "weight": 600 },
-    "display": { "family": "Archivo", "weight": 800, "stretch": "condensed (wdth 75)" },
-    "mono": { "family": "IBM Plex Mono", "weight": 500 },
-    "document": { "family": "IBM Plex Mono", "weight": 400, "note": "Typed memos and forms." }
+    "caption": {
+      "family": "IBM Plex Sans Condensed",
+      "weight": 600
+    },
+    "display": {
+      "family": "Archivo",
+      "weight": 800,
+      "stretch": "condensed (wdth 75)"
+    },
+    "mono": {
+      "family": "IBM Plex Mono",
+      "weight": 500
+    },
+    "document": {
+      "family": "IBM Plex Mono",
+      "weight": 400,
+      "note": "Typed memos and forms."
+    }
   },
   "captions": {
     "case": "Sentence case, exactly the `caption` field. Never uppercase the whole line.",
-    "size": 54, "lineHeight": 1.18, "maxWidth": 1400, "maxLines": 2, "centerY": 930, "align": "center",
+    "size": 54,
+    "lineHeight": 1.18,
+    "maxWidth": 1400,
+    "maxLines": 2,
+    "centerY": 930,
+    "align": "center",
     "color": "fg",
     "emphasis": "Words listed in the line's `emphasis` array are coloured blue, or red when the shot's accent is red.",
     "shadow": "0 2px 0 rgba(0,0,0,0.6)",
@@ -37,12 +68,46 @@
   },
   "hud": {
     "alwaysVisible": true,
-    "hideOn": ["END"],
-    "topLeft": { "lines": ["DEPT. OF UNLISTED RISKS", "ADVISORY 0001"], "font": "mono", "size": 18, "letterSpacing": "0.18em", "color": "dim", "x": 64, "y": 54 },
-    "topRight": { "text": "CLASSIFICATION: UNLISTED", "font": "mono", "size": 18, "letterSpacing": "0.18em", "color": "dim", "x": 1856, "y": 54, "align": "right" },
+    "hideOn": [
+      "END"
+    ],
+    "topLeft": {
+      "lines": [
+        "DEPT. OF UNLISTED RISKS",
+        "ADVISORY {advisory}"
+      ],
+      "font": "mono",
+      "size": 18,
+      "letterSpacing": "0.18em",
+      "color": "dim",
+      "x": 64,
+      "y": 54
+    },
+    "topRight": {
+      "text": "CLASSIFICATION: UNLISTED",
+      "font": "mono",
+      "size": 18,
+      "letterSpacing": "0.18em",
+      "color": "dim",
+      "x": 1856,
+      "y": 54,
+      "align": "right"
+    },
     "progress": {
-      "items": ["D1", "D2", "D3", "D4", "D5", "D6", "AD"],
-      "position": { "x": 1856, "y": 92, "align": "right" },
+      "items": [
+        "D1",
+        "D2",
+        "D3",
+        "D4",
+        "D5",
+        "D6",
+        "AD"
+      ],
+      "position": {
+        "x": 1856,
+        "y": 92,
+        "align": "right"
+      },
       "look": "Small mono labels, 14 px, 10 px apart. Past items: dim. Current item: fg text inside a 1.5 px blue outline box. Future items: line colour.",
       "currentFromLine": "directive field of the current line (1–6 → D1–D6, 7 → AD). Before directive 1 nothing is highlighted."
     }

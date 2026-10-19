@@ -3,6 +3,7 @@ import React from "react";
 import { C, FONT, DISPLAY_STYLE } from "../theme";
 import { clamp01, ease, lerp, prog, shake } from "../anim";
 import { Stamp } from "./Stamp";
+import { useEpisodeMeta } from "../episode-context";
 
 export const STAMP_LAND = 8;
 
@@ -40,6 +41,7 @@ function wrap(title: string, maxChars: number) {
 }
 
 export const DirectiveCard: React.FC<{ n?: number; title: string; frame: number; audioFrames: number; addendum?: boolean }> = ({ n, title, frame, audioFrames, addendum }) => {
+  const meta = useEpisodeMeta();
   const sc = lerp(1.15, 1, prog(frame, 0, 6));
   const sh = shake(frame, STAMP_LAND, 4, 8);
   const lines = addendum ? [] : wrap(title, 22);
@@ -56,7 +58,7 @@ export const DirectiveCard: React.FC<{ n?: number; title: string; frame: number;
   return (
     <g transform={`translate(${sh.x} ${sh.y})`}>
       <text x={960} y={addendum ? 330 : lines.length > 1 ? 230 : 262} textAnchor="middle" fontFamily={FONT.mono} fontWeight={500} fontSize={20} letterSpacing="0.3em" fill={C.dim}>
-        {addendum ? "ADVISORY 0001 · ADDENDUM" : "ADVISORY 0001 · DIRECTIVE"}
+        {`ADVISORY ${meta.advisory} · ${addendum ? "ADDENDUM" : "DIRECTIVE"}`}
       </text>
       <g transform={`translate(960 ${numY - numSize * 0.36}) scale(${sc}) translate(-960 ${-(numY - numSize * 0.36)})`}>
         <text x={960} y={numY} textAnchor="middle" style={DISPLAY_STYLE} fontSize={numSize} fill="none" stroke={C.fg} strokeWidth={3} letterSpacing={addendum ? "0.04em" : "0.02em"} filter="url(#glowSoft)">
@@ -87,6 +89,7 @@ export const DirectiveCard: React.FC<{ n?: number; title: string; frame: number;
 };
 
 export const EndCard: React.FC<{ frame: number; dur: number }> = ({ frame, dur }) => {
+  const meta = useEpisodeMeta();
   const land = STAMP_LAND;
   const sc = lerp(1.3, 1, prog(frame, 0, land, (x) => x * x));
   const sh = shake(frame, land, 6, 10);
@@ -94,10 +97,10 @@ export const EndCard: React.FC<{ frame: number; dur: number }> = ({ frame, dur }
   return (
     <g opacity={fadeOut} transform={`translate(${sh.x} ${sh.y})`}>
       <g opacity={clamp01(frame / 3)}>
-        <Stamp id="endstamp" x={960} y={470} text="ONGOING." size={180} rot={-6} scale={sc} opacity={0.92} seed={11} />
+        <Stamp id="endstamp" x={960} y={470} text={meta.endStamp} size={180} rot={-6} scale={sc} opacity={0.92} seed={11} />
       </g>
       <text x={960} y={680} textAnchor="middle" fontFamily={FONT.mono} fontWeight={500} fontSize={22} letterSpacing="0.3em" fill={C.dim} opacity={prog(frame, land + 6, land + 18)}>
-        NEXT ADVISORY: 0002
+        {meta.endSub}
       </text>
     </g>
   );

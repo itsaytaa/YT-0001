@@ -3,18 +3,18 @@
 import { existsSync, mkdirSync, readFileSync, copyFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { join } from "node:path";
-import { root, readJson, writeJson, scenes, audio, headers, withRetry, assertBudget, duration, generationCost, sleep } from "./lib.mjs";
+import { root, ep, slug, PUBLIC_LINES, readJson, writeJson, scenes, audio, headers, withRetry, assertBudget, duration, generationCost, sleep, slipLines } from "./lib.mjs";
 import { wer } from "./normalize.mjs";
 
 const MAX_WER = 0.15;
 const EXTRA_TRIES = 2;
 const PAD = 0.15; // silence kept before the first and after the last word
-const finalDir = join(root, "audio/lines/final");
-const publicDir = join(root, "video/public/lines");
+const finalDir = join(root, ep("audio/lines/final"));
+const publicDir = join(root, PUBLIC_LINES);
 mkdirSync(finalDir, { recursive: true });
 mkdirSync(publicDir, { recursive: true });
 
-const reportPath = "reports/stt-check.json";
+const reportPath = ep("reports/stt-check.json");
 const report = existsSync(join(root, reportPath)) ? readJson(reportPath) : { model: audio.verification.model, maxWer: MAX_WER, lines: {} };
 
 async function transcribe(file, model = audio.verification.model) {
@@ -51,7 +51,7 @@ function energyBounds(wav) {
 }
 
 function finalize(id, words) {
-  const src = join(root, `audio/lines/${id}.wav`);
+  const src = join(root, ep(`audio/lines/${id}.wav`));
   const total = duration(src);
   const eb = energyBounds(src);
   const wStart = words.length ? words[0].start : eb.start;
@@ -60,7 +60,7 @@ function finalize(id, words) {
   const end = Math.min(total, Math.max(wEnd, eb.end) + PAD);
   const filters = [`atrim=start=${start.toFixed(3)}:end=${end.toFixed(3)}`, "asetpts=PTS-STARTPTS", "afade=t=in:d=0.005", `afade=t=out:st=${(end - start - 0.03).toFixed(3)}:d=0.03`];
   // Slip line: MiniMax ignores `instructions`, so the warmer/quieter delivery is done here.
-  if (audio.voice.slipLines.includes(id)) filters.push("lowshelf=f=220:g=2", "highshelf=f=5000:g=-3", "volume=-3.5dB");
+  if (slipLines.includes(id)) filters.push("lowshelf=f=220:g=2", "highshelf=f=5000:g=-3", "volume=-3.5dB");
   const out = join(finalDir, `${id}.wav`);
   execFileSync("ffmpeg", ["-v", "error", "-y", "-i", src, "-af", filters.join(","), "-ar", "48000", "-ac", "2", "-c:a", "pcm_s16le", out]);
   copyFileSync(out, join(publicDir, `${id}.wav`));
@@ -79,10 +79,10 @@ for (const line of lines) {
   for (let attempt = 0; attempt <= EXTRA_TRIES; attempt++) {
     if (attempt > 0) {
       await assertBudget();
-      execFileSync("node", [join(root, "scripts/tts.mjs"), line.id], { stdio: "ignore", env: process.env });
+      execFileSync("node", [join(root, "scripts/tts.mjs"), "--ep", slug, line.id], { stdio: "ignore", env: process.env });
       entry.regenerated = (entry.regenerated ?? 0) + 1;
     }
-    const t = await withRetry(() => transcribe(join(root, `audio/lines/${line.id}.mp3`)), 4);
+    const t = await withRetry(() => transcribe(join(root, ep(`audio/lines/${line.id}.mp3`))), 4);
     const score = wer(line.voice, t.text);
     entry.attempts.push({ transcript: t.text.trim(), wer: +score.toFixed(3), generationId: t.generationId });
     entry.words = t.words ?? [];
