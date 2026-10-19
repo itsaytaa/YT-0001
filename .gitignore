@@ -1,0 +1,21 @@
+# secrets
+.env
+
+# dependencies / tool caches
+node_modules/
+video/node_modules/
+.remotion/
+
+# render outputs (the final MP4 is ~276 MB, over GitHub's 100 MB file limit)
+out/*.mp4
+out/render.log
+out/review/*
+!out/review/contact-sheet.png
+
+# regenerable audio
+audio/sfx/drone.wav
+video/public/sfx/drone.wav
+audio/lines/*.wav
+audio/lines/final/
+audio/lines/alt/*.wav
+*.pcm
